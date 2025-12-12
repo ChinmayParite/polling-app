@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Docker Polling App</title>
+    <style>
+        body { font-family: Arial, sans-serif; text-align: center; margin-top: 50px; }
+        .container { max-width: 600px; margin: auto; padding: 20px; border: 1px solid #ccc; }
+        button { padding: 10px 20px; font-size: 16px; margin: 10px; cursor: pointer; }
+        .results { margin-top: 30px; border-top: 1px solid #eee; padding-top: 20px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Vote for Your Favorite Container Tool</h1>
+        
+        <button onclick="castVote('Option A')">Vote for Option A (Docker)</button>
+        <button onclick="castVote('Option B')">Vote for Option B (K8s)</button>
+
+        <div class="results">
+            <h2>Current Results</h2>
+            <p id="resultA">Option A: 0 votes</p>
+            <p id="resultB">Option B: 0 votes</p>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = '/api';
+
+        async function castVote(option) {
+            const response = await fetch(`${API_URL}/vote`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ option })
+            });
+
+            if (response.ok) {
+                // Status 200 (Success)
+                alert("Vote successfully recorded! You can only vote once.");
+                fetchResults();
+            } else if (response.status === 403) {
+                // Status 403 (Forbidden - Already Voted)
+                alert("ERROR: This device has already cast a vote. Only one vote per user is allowed.");
+            } else {
+                // Other errors (e.g., 500 Server Error)
+                alert("An unexpected error occurred while casting your vote.");
+            }
+        }
+
+        async function fetchResults() {
+            const response = await fetch(`${API_URL}/results`);
+            const data = await response.json();
+            
+            document.getElementById('resultA').innerText = `Option A: ${data['Option A'] || 0} votes`;
+            document.getElementById('resultB').innerText = `Option B: ${data['Option B'] || 0} votes`;
+        }
+
+        // Fetch results when the page loads
+        fetchResults();
+        // Set an interval to poll the server every 2 seconds
+        setInterval(fetchResults, 2000);
+    </script>
+</body>
+</html>
